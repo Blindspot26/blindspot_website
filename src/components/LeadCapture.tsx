@@ -28,7 +28,6 @@ export default function LeadCapture({ preSelectedTier, preSelectedDeviceCount, o
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  const [ticketDetails, setTicketDetails] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,19 +87,6 @@ export default function LeadCapture({ preSelectedTier, preSelectedDeviceCount, o
         const currentLeads = JSON.parse(localStorage.getItem('blindspot_leads') || '[]');
         localStorage.setItem('blindspot_leads', JSON.stringify([newLead, ...currentLeads]));
 
-        // Generate simulated engineer assignment
-        const engineers = [
-          { name: "Ing. Carlos G. Brenes", role: "Arquitecto Senior de Seguridad", phone: "+506 4001-9871" },
-          { name: "Inga. María Paula Quirós", role: "Directora de Despliegue de RMM", phone: "+506 4001-9872" },
-          { name: "Ing. Esteban Chaves", role: "Director Técnico de Consultoría vCIO", phone: "+506 4001-9873" }
-        ];
-        const assignedEngineer = engineers[Math.floor(Math.random() * engineers.length)];
-
-        setTicketDetails({
-          ticketId: submissionId,
-          engineer: assignedEngineer
-        });
-
         if (onSuccess) {
           onSuccess(newLead);
         }
@@ -122,7 +108,6 @@ export default function LeadCapture({ preSelectedTier, preSelectedDeviceCount, o
     setPhone('');
     setErrorMsg('');
     setStep(1);
-    setTicketDetails(null);
   };
 
   return (
@@ -226,7 +211,7 @@ export default function LeadCapture({ preSelectedTier, preSelectedDeviceCount, o
             </motion.div>
           )}
 
-          {step === 2 && ticketDetails && (
+          {step === 2 && (
             <motion.div
               key="step2"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -242,30 +227,6 @@ export default function LeadCapture({ preSelectedTier, preSelectedDeviceCount, o
                 <p className="text-sm text-slate-500">
                   Su solicitud ha sido registrada exitosamente.
                 </p>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800 text-left rounded-xl p-5 max-w-xl mx-auto space-y-3.5 text-xs font-mono text-slate-300 shadow-xl">
-                <div className="flex justify-between pb-2 border-b border-slate-800">
-                  <span className="text-slate-500">TICKET_ID:</span>
-                  <span className="text-white font-bold">{ticketDetails.ticketId}</span>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="text-slate-500 col-span-1">REP_ASIGNADO:</span>
-                  <div className="text-emerald-400 font-semibold col-span-2">
-                    {ticketDetails.engineer.name}
-                    <div className="text-[10px] text-slate-400 font-sans mt-0.5">{ticketDetails.engineer.role}</div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-slate-500">ESTADO:</span>
-                  <span className="text-cyan-450 font-semibold">En proceso de asignación</span>
-                </div>
-
-                <div className="bg-slate-950 p-2.5 rounded border border-slate-800 text-[10px] leading-relaxed text-slate-400 space-y-1">
-                  ⚠️ <strong className="text-slate-200">Protocolo de Contacto:</strong> Nuestro especialista asignado se pondrá en contacto pronto con <strong className="text-slate-200">{contactName}</strong> en el teléfono <strong className="text-slate-200">{phone}</strong>.
-                </div>
               </div>
 
               <div className="space-y-3">

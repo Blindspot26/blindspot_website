@@ -7,34 +7,10 @@ import ValueProposition from './components/sections/ValueProposition';
 import Pricing from './components/sections/Pricing';
 import AboutUs from './components/sections/AboutUs';
 import LeadCapture from './components/LeadCapture';
-import LeadRegistryConsole from './components/demo/LeadRegistryConsole';
-import { LeadSubmission } from './types';
 
 export default function App() {
   const [activePlanSelection, setActivePlanSelection] = useState<string>('premier');
   const [deviceSelection, setDeviceSelection] = useState<number>(20);
-  const [storedLeads, setStoredLeads] = useState<LeadSubmission[]>([]);
-
-  useEffect(() => {
-    const leads = localStorage.getItem('blindspot_leads');
-    if (leads) {
-      try {
-        setStoredLeads(JSON.parse(leads));
-      } catch (e) {
-        console.error("Failed to parse leads:", e);
-      }
-    }
-  }, []);
-
-  const handleLeadSuccess = (newLead: LeadSubmission) => {
-    setStoredLeads(prev => [newLead, ...prev]);
-    setTimeout(() => {
-      const el = document.getElementById('sandbox-leads-terminal');
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 1500);
-  };
 
   const selectPlanFromCalculator = (tierId: string, deviceCount: number) => {
     setActivePlanSelection(tierId);
@@ -45,14 +21,9 @@ export default function App() {
     }
   };
 
-  const clearLeads = () => {
-    localStorage.removeItem('blindspot_leads');
-    setStoredLeads([]);
-  };
-
   return (
     <div className="min-h-screen bg-brand-slate text-slate-800 selection:bg-brand-primary selection:text-white overflow-x-hidden">
-      <Header storedLeads={storedLeads} />
+      <Header />
       <Hero />
       <DowntimeCost />
       <ValueProposition />
@@ -71,13 +42,10 @@ export default function App() {
             <LeadCapture 
               preSelectedTier={activePlanSelection} 
               preSelectedDeviceCount={deviceSelection}
-              onSuccess={handleLeadSuccess}
             />
           </div>
         </div>
       </section>
-
-      <LeadRegistryConsole storedLeads={storedLeads} onClearLeads={clearLeads} />
       <Footer />
     </div>
   );
