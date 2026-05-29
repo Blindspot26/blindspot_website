@@ -29,8 +29,9 @@ export default function LeadCapture({ preSelectedTier, preSelectedDeviceCount, o
   const [phone, setPhone] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [ticketDetails, setTicketDetails] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     
@@ -43,44 +44,75 @@ export default function LeadCapture({ preSelectedTier, preSelectedDeviceCount, o
       return;
     }
     
-    const submissionId = `BS-TKT-${Math.floor(100000 + Math.random() * 900000)}`;
-    const newLead: LeadSubmission = {
-      id: submissionId,
-      companyName,
-      contactName,
-      email,
-      phone,
-      deviceCount: preSelectedDeviceCount || 20,
-      employeeCount: Math.round((preSelectedDeviceCount || 20) * 1.2),
-      sector: 'General Corporate',
-      complianceNeeded: [],
-      preferredTier: preSelectedTier || 'PREMIER',
-      message: 'Solicitud de contacto directo.',
-      status: 'dispatched',
-      timestamp: new Date().toISOString()
-    };
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          access_key: import.meta.env.VITE_WEB3FORMS_ACCESS_KEY,
+          name: contactName,
+          email: email,
+          phone: phone,
+          company: companyName,
+          subject: "Nuevo Lead: Solicitud de Contacto - Blindspot",
+          message: `La empresa ${companyName} ha solicitado contacto.\nContacto: ${contactName}\nCorreo: ${email}\nTeléfono: ${phone}`,
+        }),
+      });
 
-    // Store in LocalStorage for persistence demonstration
-    const currentLeads = JSON.parse(localStorage.getItem('blindspot_leads') || '[]');
-    localStorage.setItem('blindspot_leads', JSON.stringify([newLead, ...currentLeads]));
+      const result = await response.json();
 
-    // Generate simulated engineer assignment
-    const engineers = [
-      { name: "Ing. Carlos G. Brenes", role: "Arquitecto Senior de Seguridad", phone: "+506 4001-9871" },
-      { name: "Inga. María Paula Quirós", role: "Directora de Despliegue de RMM", phone: "+506 4001-9872" },
-      { name: "Ing. Esteban Chaves", role: "Director Técnico de Consultoría vCIO", phone: "+506 4001-9873" }
-    ];
-    const assignedEngineer = engineers[Math.floor(Math.random() * engineers.length)];
+      if (result.success) {
+        const submissionId = `BS-TKT-${Math.floor(100000 + Math.random() * 900000)}`;
+        const newLead: LeadSubmission = {
+          id: submissionId,
+          companyName,
+          contactName,
+          email,
+          phone,
+          deviceCount: preSelectedDeviceCount || 20,
+          employeeCount: Math.round((preSelectedDeviceCount || 20) * 1.2),
+          sector: 'General Corporate',
+          complianceNeeded: [],
+          preferredTier: preSelectedTier || 'PREMIER',
+          message: 'Solicitud de contacto directo vía Web3Forms.',
+          status: 'dispatched',
+          timestamp: new Date().toISOString()
+        };
 
-    setTicketDetails({
-      ticketId: submissionId,
-      engineer: assignedEngineer
-    });
+        // Store in LocalStorage for persistence demonstration
+        const currentLeads = JSON.parse(localStorage.getItem('blindspot_leads') || '[]');
+        localStorage.setItem('blindspot_leads', JSON.stringify([newLead, ...currentLeads]));
 
-    if (onSuccess) {
-      onSuccess(newLead);
+        // Generate simulated engineer assignment
+        const engineers = [
+          { name: "Ing. Carlos G. Brenes", role: "Arquitecto Senior de Seguridad", phone: "+506 4001-9871" },
+          { name: "Inga. María Paula Quirós", role: "Directora de Despliegue de RMM", phone: "+506 4001-9872" },
+          { name: "Ing. Esteban Chaves", role: "Director Técnico de Consultoría vCIO", phone: "+506 4001-9873" }
+        ];
+        const assignedEngineer = engineers[Math.floor(Math.random() * engineers.length)];
+
+        setTicketDetails({
+          ticketId: submissionId,
+          engineer: assignedEngineer
+        });
+
+        if (onSuccess) {
+          onSuccess(newLead);
+        }
+        setStep(2);
+      } else {
+        setErrorMsg('Hubo un error al enviar el formulario. Por favor, intente de nuevo.');
+      }
+    } catch (error) {
+      setErrorMsg('Error de red al intentar enviar. Intente más tarde.');
+    } finally {
+      setIsSubmitting(false);
     }
-    setStep(2);
   };
 
   const resetForm = () => {
@@ -184,10 +216,11 @@ export default function LeadCapture({ preSelectedTier, preSelectedDeviceCount, o
                 <button
                   type="submit"
                   id="btn-step1-next"
-                  className="px-6 py-2.5 rounded-lg bg-brand-primary text-white font-bold text-sm hover:bg-brand-primary/90 transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+                  disabled={isSubmitting}
+                  className="px-6 py-2.5 rounded-lg bg-brand-primary text-white font-bold text-sm hover:bg-brand-primary/90 transition-all flex items-center gap-1.5 shadow-md cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Enviar Información
-                  <ArrowRight className="w-4 h-4" />
+                  {isSubmitting ? 'Enviando...' : 'Enviar Información'}
+                  {!isSubmitting && <ArrowRight className="w-4 h-4" />}
                 </button>
               </div>
             </motion.div>
